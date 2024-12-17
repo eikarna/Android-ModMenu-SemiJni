@@ -13,7 +13,7 @@ import android.widget.Toast;
 public class MainActivity extends Activity {
 
     static {
-        System.loadLibrary("MyLibName");
+        System.loadLibrary("eikarna");
     }
 
     static native void CheckOverlayPermission(Context ctx);

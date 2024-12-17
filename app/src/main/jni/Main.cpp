@@ -205,294 +205,11 @@ void SetupImgui() {
     ImGui::GetStyle().ScaleAllSizes(3.0f);
 }
 
-//KNFBIPGOEPP
-
-vector<Player *> players;
-
-bool playerFind(void *player) {
-    if (player != nullptr) {
-        for (auto & i : players) {
-            if (player == i) return true;
-        }
-    }
-    return false;
-}
-
-
-Quaternion lookRotation;
-Player *myPlayer = NULL;
-
-
-
-bool isInsideFOV(int x, int y) {
-    if (!Struct::Functions::AIM_SIZE)
-        return true;
-
-    int circle_x = Screen::get_width() / 2;
-    int circle_y = Screen::get_height() / 2;
-    int rad = Struct::Functions::AIM_SIZE;
-    return (x - circle_x) * (x - circle_x) + (y - circle_y) * (y - circle_y) <= rad * rad;
-}
-
-void (*old_Player_Update)(...);
-
-void Player_Update(Player *player) {
-    if (player != NULL) {
-
-        bool isMine = *(bool *) ((uint64_t) player + 0x90); //isMine
-
-        if (isMine) {
-            myPlayer = player;
-        }
-
-        if (!playerFind(player)) players.push_back(player);
-        if (players.size() > 20) {
-            players.clear();
-        }
-
-        Vector3 MyPos{0, 0, 0};
-        Vector3 Head{0, 0, 0};
-        if(myPlayer != player) {
-            if (player->m_Alive() && player) {
-                if (myPlayer->m_Alive()&& myPlayer) {
-
-                    auto local_m_Mesh = (myPlayer)->get_thirdPersonBodyPartReferences();
-                    if (local_m_Mesh) {
-                        MyPos = local_m_Mesh->get_Head()->get_position();
-                    }
-
-                    auto PlayerTransform = ((Component *) player)->get_transform();
-                    if (PlayerTransform){
-
-                        if(myPlayer->get_TeamNumber() != player->get_TeamNumber()){
-                            auto EBodyPartReferences = player->get_thirdPersonBodyPartReferences();
-                            auto enemy_m_Mesh = (EBodyPartReferences)->get_Head();
-                            if (enemy_m_Mesh) {
-                                Head = enemy_m_Mesh->get_position();
-                                if(!Physics::Raycast(MyPos, Head)){
-                                    if(myPlayer->get_shooting()){
-                                        lookRotation = Quaternion::LookRotation((Head + Vector3(0, - 0.50f, 0)) - MyPos, Vector3(0, 1, 0));
-                                        LocalPlayer *LocalPlayer_Instance = 0;
-                                        Il2Cpp::GetStaticFieldValue("Assembly-CSharp.dll", "", "LocalPlayer", "Instance", &LocalPlayer_Instance);
-                                        if(LocalPlayer_Instance){
-                                           // *(int *) ((uint64_t) LocalPlayer_Instance->get_instancedWeapon() + 0x8)  = 14;
-
-
-                                            auto fpsLook = *(uintptr_t *) ((uintptr_t) LocalPlayer_Instance + 0xC);
-
-                                            if(fpsLook){
-                                                auto m_Camera = Camera::get_main();
-                                                if(!m_Camera) return old_Player_Update(player);
-                                                auto HeadSc = m_Camera->WorldToScreen(Head);
-                                                if(isInsideFOV((int) HeadSc.X, (int) HeadSc.Y)){
-                                                    if(Struct::Functions::aimbot)
-                                                        *(Quaternion *) ((uint64_t) fpsLook + 0x2C) = lookRotation;
-                                                }
-
-                                                auto WeaponMy = myPlayer->get_weapon();
-                                                if(WeaponMy){
-
-                                                    if(Struct::Functions::Range>0){
-                                                        *(float *) ((uint64_t) WeaponMy + 0x80) = Struct::Functions::Range;
-                                                    }
-                                                    if(Struct::Functions::Damage>0){
-                                                        *(float *) ((uint64_t) WeaponMy + 0x84) = Struct::Functions::Damage;
-                                                    }
-                                                    if(Struct::Functions::Speed>0){
-                                                        *(float *) ((uint64_t) WeaponMy + 0x108) = Struct::Functions::Speed;
-                                                        *(float *) ((uint64_t) WeaponMy + 0x10C) = Struct::Functions::Speed;
-                                                    }
-
-                                                    if(Struct::Functions::NoRecoil){
-                                                        *(float *) ((uint64_t) WeaponMy + 0x158) = 0;
-                                                        *(float *) ((uint64_t) WeaponMy + 0xCC) = 0;
-                                                        *(float *) ((uint64_t) WeaponMy + 0xD0) = 0;
-                                                        *(float *) ((uint64_t) WeaponMy + 0x14C) = 0;
-                                                    }
-
-                                                }
-
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return old_Player_Update(player);
-}
-
-void (*old_Player_OnDestroy)(...);
-
-void Player_OnDestroy(void *player) {
-    if (player != NULL) {
-        old_Player_OnDestroy(player);
-        players.clear();
-    }
-}
-
-
-
-void * DrawEspList(ImDrawList *m_Canvas){
-    if (!bInitDone) return nullptr;
-
-    int g_screenHeight = Screen::get_height();
-    int g_screenWidth = Screen::get_width();
-
-    if(!g_screenHeight || !g_screenWidth) return nullptr;
-
-    Vector3 MyPos{0, 0, 0};
-
-    if(Struct::Functions::aimbot){
-        m_Canvas->AddCircle({static_cast<float>(g_screenWidth/2),static_cast<float>(g_screenHeight/2)},Struct::Functions::AIM_SIZE,ImGui::ColorConvertFloat4ToU32(*(ImVec4 *)new float[4] {(float)0, (float)255, (float)0, (float)255}),999);
-    }
-
-    LocalPlayer *LocalPlayer_Instance = nullptr;
-    Il2Cpp::GetStaticFieldValue("Assembly-CSharp.dll", "", "LocalPlayer", "Instance", &LocalPlayer_Instance);
-    if(LocalPlayer_Instance) {
-        auto m_Camera = Camera::get_main();
-        if(!m_Camera) return nullptr;
-
-        auto LBodyPartReferences = myPlayer->get_thirdPersonBodyPartReferences();
-        if (LBodyPartReferences) {
-            MyPos = LBodyPartReferences->get_Head()->get_position();
-        }
-        auto myPosSc = m_Camera->WorldToScreen(MyPos);
-        auto MyTeami = myPlayer->get_TeamNumber();
-        for (auto Player : players) {
-            if (Player->m_Alive() && Player != myPlayer && Player) {
-                auto ETeami = Player->get_TeamNumber();
-
-                if(!Struct::Functions::isESPTeamMate){
-                    if(MyTeami == ETeami)
-                        continue;
-                }
-                auto LBodyPartReferences = Player->get_thirdPersonBodyPartReferences();
-
-                if (LBodyPartReferences) {
-
-                    auto Head = m_Camera->WorldToScreen(LBodyPartReferences->get_Head()->get_position());
-                    auto Spine = m_Camera->WorldToScreen(LBodyPartReferences->get_spine()->get_position());
-                    auto Hips = m_Camera->WorldToScreen(LBodyPartReferences->get_hips()->get_position());
-                    auto LeftUpperArm = m_Camera->WorldToScreen(LBodyPartReferences->get_leftUpperArm()->get_position());
-                    auto LeftLowerArm = m_Camera->WorldToScreen(LBodyPartReferences->get_leftLowerArm()->get_position());
-                    auto RightUpperArm = m_Camera->WorldToScreen(LBodyPartReferences->get_rightUpperArm()->get_position());
-                    auto RightLowerArm = m_Camera->WorldToScreen(LBodyPartReferences->get_rightLowerArm()->get_position());
-                    auto LeftUpperLeg = m_Camera->WorldToScreen(LBodyPartReferences->get_leftUpperLeg()->get_position());
-                    auto LeftLowerLeg = m_Camera->WorldToScreen(LBodyPartReferences->get_leftLowerLeg()->get_position());
-                    auto RightUpperLeg = m_Camera->WorldToScreen(LBodyPartReferences->get_rightUpperLeg()->get_position());
-                    auto RightLowerLeg = m_Camera->WorldToScreen(LBodyPartReferences->get_rightLowerLeg()->get_position());
-
-                    if (Head.Z < 1.f) continue;
-                    if (Spine.Z < 1.f) continue;
-                    if (Hips.Z < 1.f) continue;
-                    if (LeftUpperArm.Z < 1.f) continue;
-                    if (LeftLowerArm.Z < 1.f) continue;
-                    if (RightUpperArm.Z < 1.f) continue;
-                    if (RightLowerArm.Z < 1.f) continue;
-                    if (LeftUpperLeg.Z < 1.f) continue;
-                    if (LeftLowerLeg.Z < 1.f) continue;
-                    if (RightUpperLeg.Z < 1.f) continue;
-                    if (RightLowerLeg.Z < 1.f) continue;
-
-
-                    float Distance = Vector3::Distance(MyPos, LBodyPartReferences->get_Head()->get_position());
-
-                    if (Struct::Functions::isESPLine) {
-                        m_Canvas->AddLine(ImVec2((float)g_screenWidth / 2, g_screenHeight), ImVec2(Head.X, g_screenHeight - Head.Y), ImGui::ColorConvertFloat4ToU32(ImVec4(0.0f, 1.0f, 0.0f, 1.0f)), 2.0f);
-                    }
-
-                    if (Struct::Functions::isESPBox) {
-                        float boxHeight = abs(Head.Y - Hips.Y);
-                        float boxWidth = boxHeight * 0.65f;
-                        Vector2 vBox = {Head.X - (boxWidth / 2), Head.Y};
-                        m_Canvas->AddRect(ImVec2(g_screenWidth - (g_screenWidth - vBox.X), g_screenHeight - vBox.Y),ImVec2(g_screenWidth - (g_screenWidth - vBox.X) + boxWidth, g_screenHeight - vBox.Y + boxHeight),ImGui::ColorConvertFloat4ToU32(ImVec4(0.0f, 1.0f, 0.0f, 1.0f)), 0.0f, 0, 1.5f);
-
-                    }
-
-                    if (Struct::Functions::isESPHealth) {
-                        int CurHP = Player->m_Health();
-                        int MaxHP = 100;
-                        ImVec4 color = ImVec4(1.0f, std::min(((2.0f * (MaxHP - CurHP)) / MaxHP), 1.0f), std::min(((2.0f * CurHP) / MaxHP), 1.0f), 0.0f);
-                        ImVec2 aboveHeadSc = ImVec2(Head.X, Head.Y);
-                        if (Head.Z > 0.0f) {
-                            float mWidth = ImGui::GetIO().FontGlobalScale * 35.0f;
-                            float mHeight = mWidth * 0.175f;
-
-                            aboveHeadSc.x -= (mWidth / 2.0f);
-                            aboveHeadSc.y += (mHeight * 2.0f);
-
-                            ImVec2 rectMin = ImVec2(g_screenWidth - (g_screenWidth - aboveHeadSc.x), g_screenHeight - aboveHeadSc.y);
-                            ImVec2 rectMax = ImVec2(rectMin.x + (CurHP * mWidth / MaxHP), rectMin.y + mHeight);
-
-                            m_Canvas->AddRectFilled(rectMin, rectMax, ImGui::ColorConvertFloat4ToU32(color));
-                            m_Canvas->AddRect(rectMin, rectMax, ImGui::ColorConvertFloat4ToU32(ImVec4(0.0f, 0.0f, 0.0f, 1.0f)));
-                        }
-
-                    }
-
-                    if (Struct::Functions::isESPName || Struct::Functions::isESPDistance) {
-                        ImVec2 BelowRootSc = ImVec2(Hips.X, Hips.Y);
-                        if (Hips.Z > 0.0f) {
-                            std::string ws;
-                            if (Struct::Functions::isESPName) {
-                                auto m_NickName = *(String**)((uint64_t)Player + 0x17C);
-                                if (m_NickName) {
-                                    ws += m_NickName->CString();
-                                }
-
-                                auto m_WNickName = *(String**)((uint64_t)Player->get_weapon() + 0xC);
-                                if (m_WNickName) {
-                                    ws += " : ";
-                                    ws += m_WNickName->CString();
-                                }
-
-                                if (Struct::Functions::isESPDistance) {
-                                    if (!ws.empty())
-                                        ws += " [";
-                                    ws += std::to_string((int)Distance);
-                                    ws += "m]";
-                                }
-
-                                ImVec2 textPos = ImVec2(g_screenWidth - (g_screenWidth - BelowRootSc.x), g_screenHeight - BelowRootSc.y);
-
-                                m_Canvas->AddText(ImGui::GetFont(), ImGui::GetFontSize(), textPos, ImGui::ColorConvertFloat4ToU32(ImVec4(1.0f, 0.0f, 1.0f, 1.0f)), ws.c_str());
-                            }
-
-
-                        }
-
-                    }
-                    if(Struct::Functions::isESPSkeleton){
-                        if (LBodyPartReferences) {
-
-                            ImU32 lineColor = ImGui::ColorConvertFloat4ToU32(ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
-                            float lineSize = 2.0f;
-
-                            m_Canvas->AddLine(ImVec2(Head.X, g_screenHeight - Head.Y), ImVec2(Spine.X, g_screenHeight - Spine.Y), lineColor, lineSize);
-                            m_Canvas->AddLine(ImVec2(Spine.X, g_screenHeight - Spine.Y), ImVec2(Hips.X, g_screenHeight - Hips.Y), lineColor, lineSize);
-                            m_Canvas->AddLine(ImVec2(Spine.X, g_screenHeight - Spine.Y), ImVec2(LeftUpperArm.X, g_screenHeight - LeftUpperArm.Y), lineColor, lineSize);
-                            m_Canvas->AddLine(ImVec2(LeftUpperArm.X, g_screenHeight - LeftUpperArm.Y), ImVec2(LeftLowerArm.X, g_screenHeight - LeftLowerArm.Y), lineColor, lineSize);
-                            m_Canvas->AddLine(ImVec2(Spine.X, g_screenHeight - Spine.Y), ImVec2(RightUpperArm.X, g_screenHeight - RightUpperArm.Y), lineColor, lineSize);
-                            m_Canvas->AddLine(ImVec2(RightUpperArm.X, g_screenHeight - RightUpperArm.Y), ImVec2(RightLowerArm.X, g_screenHeight - RightLowerArm.Y), lineColor, lineSize);
-                            m_Canvas->AddLine(ImVec2(Hips.X, g_screenHeight - Hips.Y), ImVec2(LeftUpperLeg.X, g_screenHeight - LeftUpperLeg.Y), lineColor, lineSize);
-                            m_Canvas->AddLine(ImVec2(LeftUpperLeg.X, g_screenHeight - LeftUpperLeg.Y), ImVec2(LeftLowerLeg.X, g_screenHeight - LeftLowerLeg.Y), lineColor, lineSize);
-                            m_Canvas->AddLine(ImVec2(Hips.X, g_screenHeight - Hips.Y), ImVec2(RightUpperLeg.X, g_screenHeight - RightUpperLeg.Y), lineColor, lineSize);
-                            m_Canvas->AddLine(ImVec2(RightUpperLeg.X, g_screenHeight - RightUpperLeg.Y), ImVec2(RightLowerLeg.X, g_screenHeight - RightLowerLeg.Y), lineColor, lineSize);
-
-                        }
-                    }
-                }
-
-            }
-        }
-    }
-
-    return nullptr;
+// Hook Functions
+int (*old_MissionProgressData_get_Count)(void *instance);
+int MissionProgressData_get_Count(void *instance) {
+    // Always return a fixed value
+    return 100;
 }
 
 EGLBoolean (*old_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface);
@@ -525,20 +242,6 @@ EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     return old_eglSwapBuffers(dpy, surface);
 }
 
-void (*old_DoRecoil)(Weapon *OLLPOKDLOLO, int BFEHFMDMFMD, float HFBDADFGGNE);
-void hook_DoRecoil(Weapon *OLLPOKDLOLO, int BFEHFMDMFMD, float HFBDADFGGNE){
-    if(Struct::Functions::NoRecoil){
-        auto WeaponMy = myPlayer->get_weapon();
-        if(WeaponMy){
-            if(WeaponMy == OLLPOKDLOLO){
-                return old_DoRecoil(OLLPOKDLOLO,BFEHFMDMFMD,0);
-            }
-        }
-
-    }
-    return old_DoRecoil(OLLPOKDLOLO,BFEHFMDMFMD,HFBDADFGGNE);
-}
-
 // we will run our hacks in a new thread so our while loop doesn't block process main thread
 void *hack_thread(void *) {
     LOGI(OBFUSCATE("pthread created"));
@@ -561,13 +264,10 @@ void *hack_thread(void *) {
 
     Struct::Offsets::Physics::Raycast = (uintptr_t) Il2Cpp::GetMethodOffset("UnityEngine.dll", "UnityEngine","Physics", "Raycast",2);
 
-    Struct::Offsets::Player::get_health = (uintptr_t) Il2Cpp::GetMethodOffset("Assembly-CSharp.dll", "","Player", "get_health");
-    Struct::Offsets::Player::Update = (uintptr_t) Il2Cpp::GetMethodOffset("Assembly-CSharp.dll", "", "Player", "Update", 0);
-    Struct::Offsets::Player::OnDestroy = (uintptr_t) Il2Cpp::GetMethodOffset("Assembly-CSharp.dll", "", "Player", "OnDestroy", 0);
+    Struct::Offsets::MissionProgressData::get_count = (uintptr_t) Il2Cpp::GetMethodOffset("Assembly-CSharp.dll", "Celes2","MissionProgressData", "get_Count");
+    // Struct::Offsets::MissionProgressData::get_count = (uintptr_t) Il2Cpp::GetMethodOffset("Assembly-CSharp.dll", "Celes2","MissionProgressData", "get_Count");
 
-    DobbyHook((void *)Struct::Offsets::Player::Update,(void *) Player_Update, (void **) &old_Player_Update);
-    DobbyHook((void *)Struct::Offsets::Player::OnDestroy,(void *) Player_OnDestroy, (void **) &old_Player_OnDestroy);
-    DobbyHook(reinterpret_cast<void *>(g_il2cpp + 0xCB09C0), (void *) hook_DoRecoil, (void **) &old_DoRecoil);
+    DobbyHook((void *)Struct::Offsets::MissionProgressData::get_count,(void *) MissionProgressData_get_Count, (void **) &MissionProgressData_get_Count);
 
     bInitDone = true;
 
@@ -591,21 +291,10 @@ jobjectArray getFeatureList(JNIEnv *env, jobject context) {
     MakeToast(env, context, OBFUSCATE("Modded by LGL"), Toast::LENGTH_LONG);
 
     const char *features[] = {
-            OBFUSCATE("Category_ESP"),//Not counted
-            OBFUSCATE("2_Toggle_ESP Line"),//1
-            OBFUSCATE("3_Toggle_ESP Box"),//2
-            OBFUSCATE("4_Toggle_ESP Health"),//4
-            OBFUSCATE("5_Toggle_ESP Name"),//5
-            OBFUSCATE("6_Toggle_ESP Distance"),//6
-            OBFUSCATE("7_Toggle_ESP Skeleton"),//7
-            OBFUSCATE("8_Toggle_ESP TeamMate"),//8
-            OBFUSCATE("Category_Aimbot "),//Not counted
-            OBFUSCATE("9_Toggle_Aimbot Simulation"),//9
-            OBFUSCATE("10_SeekBar_Aimbot Fov_0_500"),//10
-            OBFUSCATE("11_Toggle_No Recoil"),//11
-            OBFUSCATE("12_SeekBar_Weapon Range_0_1000"),//12
-            OBFUSCATE("13_SeekBar_Damage Multiplier_0_1000"),//13
-            OBFUSCATE("14_SeekBar_Speed Hack_0_100"),//14
+            OBFUSCATE("Category_Auto"),//Not counted
+            OBFUSCATE("2_Toggle_Auto Quest Weekly/Daily"),//1
+            OBFUSCATE("Category_Player Data"),
+            OBFUSCATE("3_SeekBar_Speed Hack_0_100"),//3
 
     };
 
@@ -625,43 +314,10 @@ void Changes(JNIEnv *env, jclass clazz, jobject obj,jint featNum, jstring featNa
 
     switch (featNum) {
         case 2:
-            Struct::Functions::isESPLine = boolean;
+            Struct::Functions::isAutoQDailyW = boolean;
             break;
         case 3:
-            Struct::Functions::isESPBox = boolean;
-            break;
-        case 4:
-            Struct::Functions::isESPHealth = boolean;
-            break;
-        case 5:
-            Struct::Functions::isESPName = boolean;
-            break;
-        case 6:
-            Struct::Functions::isESPDistance = boolean;
-            break;
-        case 7:
-            Struct::Functions::isESPSkeleton = boolean;
-            break;
-        case 8:
-            Struct::Functions::isESPTeamMate = boolean;
-            break;
-        case 9:
-            Struct::Functions::aimbot = boolean;
-            break;
-        case 10:
-            Struct::Functions::AIM_SIZE = value;
-            break;
-        case 11:
-            Struct::Functions::NoRecoil = boolean;
-            break;
-        case 12:
-            Struct::Functions::Range = value;
-            break;
-        case 13:
-            Struct::Functions::Damage = value;
-            break;
-        case 14:
-            Struct::Functions::Speed = value;
+            Struct::Functions::movementSpeed = value;
             break;
     }
 }

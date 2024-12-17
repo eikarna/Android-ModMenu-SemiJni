@@ -56,7 +56,7 @@ include_directories(Codes)
 find_package(Dobby REQUIRED CONFIG)
 include_directories(prefab/modules/dobby/include)
 
-add_library(MyLibName SHARED
+add_library(eikarna SHARED
         Main.cpp
         LGL2Cpp/Il2Cpp.cpp
         KittyMemory/KittyMemory.cpp
@@ -72,4 +72,4 @@ add_library(MyLibName SHARED
         ImGui/backends/imgui_impl_android.cpp
         )
 
-target_link_libraries(MyLibName  dobby::dobby z log android EGL GLESv1_CM GLESv2 GLESv3)
+target_link_libraries(eikarna  dobby::dobby z log android EGL GLESv1_CM GLESv2 GLESv3)

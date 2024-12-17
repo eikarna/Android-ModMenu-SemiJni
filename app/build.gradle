@@ -1,15 +1,15 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 33
+    compileSdkVersion 34
     defaultConfig {
         applicationId "com.android.support"
-        minSdkVersion 19
-        targetSdkVersion 33
+        minSdkVersion 24
+        targetSdkVersion 34
         versionCode 1
-        versionName "2.2"
+        versionName "1.0"
         ndk {
-            abiFilters 'armeabi-v7a'
+            abiFilters 'armeabi-v7a', 'arm64-v8a'
         }
         buildFeatures {
             prefab true
@@ -34,13 +34,12 @@ android {
             version "3.18.1"
         }
     }
-    ndkVersion = '22.0.7026061'
+    namespace 'com.android.support'
 }
 
 //dependencies must be placed below 'android' brackets to get it work on AIDE
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-
     implementation  "io.github.vvb2060.ndk:dobby:1.2"
     implementation "dev.rikka.ndk.thirdparty:cxx:1.2.0"
 
