@@ -19,10 +19,25 @@ jobs:
       run: |
         sudo apt install tree p7zip
         gradle wrapper
+    - name: Prepare Dobby Library
+      run: |
+        # Example of downloading Dobby (adjust URL and method as needed)
+        git clone https://github.com/jmpews/Dobby.git
+        cd Dobby
+        mkdir build && cd build
+        cmake ..
+        make
+        sudo make install
+        # Set Dobby_DIR if needed
+        echo "Dobby_DIR=/usr/local/dobby" >> $GITHUB_ENV
+
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
-      run: ./gradlew build -x lint
+      run: |
+        ./gradlew installDist
+        prefab --output out/armeabi-v7a --build-system cmake --platform android --abi armeabi-v7a --os-version 21 --ndk-version 27 --stl c++_shared deps
+        ./gradlew build -x lint
     - name: List Files & Folders
       run: tree
     - name: Rename each library so
