@@ -57,8 +57,6 @@ include_directories(KittyMemory)
 include_directories(Unity)
 include_directories(Stuffs)
 include_directories(Codes)
-
-find_package(Dobby REQUIRED CONFIG)
 include_directories(Dobby/include)
 
 add_library(eikarna SHARED
