@@ -23,7 +23,6 @@ jobs:
       run: |
         # Example of downloading Dobby (adjust URL and method as needed)
         git clone https://github.com/chiteroman/Dobby.git
-        cd Dobby
         mv Dobby app/src/main/jni
 
     - name: Grant execute permission for gradlew
