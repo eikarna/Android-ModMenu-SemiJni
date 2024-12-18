@@ -72,4 +72,4 @@ add_library(eikarna SHARED
         ImGui/backends/imgui_impl_android.cpp
         )
 
-target_link_libraries(eikarna dobby_static z log android EGL GLESv1_CM GLESv2 GLESv3)
+target_link_libraries(eikarna PRIVATE dobby_static z log android EGL GLESv1_CM GLESv2 GLESv3)
