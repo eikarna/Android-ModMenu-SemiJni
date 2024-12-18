@@ -9,27 +9,18 @@
 
 namespace Struct {
     namespace Offsets{
-        namespace Component{
-            uintptr_t get_transform = 0;
+        namespace MissionProgressData {
+            uintptr_t count = 0;
         }
-        namespace Transform{
-            uintptr_t get_position = 0;
-        }
-        namespace Camera{
-            uintptr_t get_main = 0;
-            uintptr_t WorldToScreenPoint = 0;
-        }
-        namespace MissionProgressData{
-            uintptr_t get_count = 0;
-        }
-        namespace Physics{
-            uintptr_t Raycast = 0;
+        namespace Character {
+            uintptr_t moveSpeedRate = 0;
         }
     }
 
     namespace Functions{
-        int movementSpeed = 10;
-        bool isAutoQDailyW = false;
+        int MAX_MOVE_SPEED = 100;
+        float moveSpeed = 10;
+        bool autoQDailyWeekly;
     }
 }
 
