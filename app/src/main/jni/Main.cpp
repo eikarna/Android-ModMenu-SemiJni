@@ -212,36 +212,6 @@ int MissionProgressData_get_Count(void *instance) {
     return 100;
 }
 
-EGLBoolean (*old_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface);
-EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
-
-    if (!setup) {
-        SetupImgui();
-        setup = true;
-    }
-
-    ImGuiIO &io = ImGui::GetIO();
-
-    if (io.WantTextInput && !io.KeyCtrl && !io.KeyShift) {
-        //displayKeyboard(NULL, true);
-    }
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui::NewFrame();
-
-    DrawEspList(ImGui::GetBackgroundDrawList());
-    ImGui::EndFrame();
-    ImGui::Render();
-    glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-    if (clearMousePos) {
-        io.MousePos = ImVec2(-1, -1);
-        clearMousePos = false;
-    }
-
-    return old_eglSwapBuffers(dpy, surface);
-}
-
 // we will run our hacks in a new thread so our while loop doesn't block process main thread
 void *hack_thread(void *) {
     LOGI(OBFUSCATE("pthread created"));
@@ -257,17 +227,11 @@ void *hack_thread(void *) {
 
     sleep(5);
 
-    Struct::Offsets::Transform::get_position = (uintptr_t) Il2Cpp::GetMethodOffset("UnityEngine.dll","UnityEngine","Transform","get_position");
-    Struct::Offsets::Camera::get_main = (uintptr_t) Il2Cpp::GetMethodOffset("Assembly-CSharp.dll", "","CameraManager","get_MainCamera", 0);
-    Struct::Offsets::Camera::WorldToScreenPoint = (uintptr_t) Il2Cpp::GetMethodOffset("UnityEngine.dll","UnityEngine","Camera","WorldToScreenPoint",1);
-    Struct::Offsets::Component::get_transform = (uintptr_t) Il2Cpp::GetMethodOffset("UnityEngine.dll","UnityEngine","Component","get_transform");
-
-    Struct::Offsets::Physics::Raycast = (uintptr_t) Il2Cpp::GetMethodOffset("UnityEngine.dll", "UnityEngine","Physics", "Raycast",2);
-
-    Struct::Offsets::MissionProgressData::get_count = (uintptr_t) Il2Cpp::GetMethodOffset("Assembly-CSharp.dll", "Celes2","MissionProgressData", "get_Count");
-    // Struct::Offsets::MissionProgressData::get_count = (uintptr_t) Il2Cpp::GetMethodOffset("Assembly-CSharp.dll", "Celes2","MissionProgressData", "get_Count");
-
-    DobbyHook((void *)Struct::Offsets::MissionProgressData::get_count,(void *) MissionProgressData_get_Count, (void **) &MissionProgressData_get_Count);
+    // Save offsets
+    Struct::Offsets::MissionProgressData::count = (uintptr_t) Il2Cpp::GetFieldOffset("Assembly-CSharp.dll", "Celes2","MissionProgressData", "count");
+    // Our Hook
+    // DobbyHook(reinterpret_cast<void *>(reinterpret_cast<void *>(g_il2cpp + 0x191B5CC), (void *) MissionProgressData_get_Count, (void **) &old_MissionProgressData_get_Count), reinterpret_cast<dobby_dummy_func_t>(replacement_func), reinterpret_cast<dobby_dummy_func_t *>(&origin_func));
+    // HOOK(g_il2cpp + 0x191B5CC, MissionProgressData_get_Count, old_MissionProgressData_get_Count);
 
     bInitDone = true;
 
@@ -275,12 +239,9 @@ void *hack_thread(void *) {
 
     if (nullptr != sym_input){
         origInitializeMotionEvent = reinterpret_cast<InitializeMotionEventFunc>(sym_input);
-        DobbyHook((void *)origInitializeMotionEvent, (void *)myInitializeMotionEvent, (void **)&origInitializeMotionEvent);
-
+        DobbyHook((void *)origInitializeMotionEvent, reinterpret_cast<dobby_dummy_func_t>(myInitializeMotionEvent), reinterpret_cast<dobby_dummy_func_t*>(&origInitializeMotionEvent));
     }
-    auto addr = (uintptr_t)dlsym(RTLD_NEXT, "eglSwapBuffers");
-    DobbyHook((void *)addr, (void *)hook_eglSwapBuffers, (void **)&old_eglSwapBuffers);
-
+    
     return nullptr;
 }
 
@@ -288,13 +249,12 @@ jobjectArray getFeatureList(JNIEnv *env, jobject context) {
     jobjectArray ret;
 
     //Toasts added here so it's harder to remove it
-    MakeToast(env, context, OBFUSCATE("Modded by LGL"), Toast::LENGTH_LONG);
+    MakeToast(env, context, OBFUSCATE("Modded by Eikarna"), Toast::LENGTH_LONG);
 
     const char *features[] = {
             OBFUSCATE("Category_Auto"),//Not counted
-            OBFUSCATE("2_Toggle_Auto Quest Weekly/Daily"),//1
-            OBFUSCATE("Category_Player Data"),
-            OBFUSCATE("3_SeekBar_Speed Hack_0_100"),//3
+            OBFUSCATE("2_Toggle_Auto Daily/Weekly Quest"),//1
+            OBFUSCATE("3_SeekBar_Movement Speed (TODO)_0_100"),//14
 
     };
 
@@ -314,10 +274,10 @@ void Changes(JNIEnv *env, jclass clazz, jobject obj,jint featNum, jstring featNa
 
     switch (featNum) {
         case 2:
-            Struct::Functions::isAutoQDailyW = boolean;
+            Struct::Functions::autoQDailyWeekly = boolean;
             break;
-        case 3:
-            Struct::Functions::movementSpeed = value;
+	case 3:
+            Struct::Functions::moveSpeed = value;
             break;
     }
 }
@@ -410,4 +370,3 @@ JNI_OnLoad(JavaVM *vm, void *reserved) {
 
     return JNI_VERSION_1_6;
 }
-
