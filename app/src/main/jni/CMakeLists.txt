@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.18.1)
 
-project(eikarna)
-
 set(LINKER_FLAGS "-ffixed-x18 -Wl,--hash-style=both")
 set(C_FLAGS "-Werror=format -fdata-sections -ffunction-sections")
 set(CXX_FLAGS "${CXX_FLAGS} -fno-exceptions -fno-rtti")
@@ -38,7 +36,6 @@ set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LINKER_FLAGS}")
 set(CMAKE_CXX_FLAGS "-Werror,-Wformat-security")
 
 add_subdirectory(Dobby)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE dobby_static)
 
 include_directories(include)
 include_directories(
@@ -75,4 +72,4 @@ add_library(eikarna SHARED
         ImGui/backends/imgui_impl_android.cpp
         )
 
-target_link_libraries(eikarna  dobby::dobby z log android EGL GLESv1_CM GLESv2 GLESv3)
+target_link_libraries(eikarna dobby_static z log android EGL GLESv1_CM GLESv2 GLESv3)
