@@ -1,6 +1,6 @@
 name: Android CI
 
-on: workflow_dispatch
+on: [push, workflow_dispatch]
 
 jobs:
   build:
@@ -14,7 +14,6 @@ jobs:
       with:
         java-version: '21'
         distribution: 'zulu'
-        cache: gradle
     - name: Install Dependecies
       run: |
         sudo apt install tree p7zip
