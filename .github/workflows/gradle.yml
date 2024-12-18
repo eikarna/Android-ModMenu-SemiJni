@@ -9,10 +9,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: set up JDK 17
+    - name: set up JDK 21
       uses: actions/setup-java@v4
       with:
-        java-version: '17'
+        java-version: '21'
         distribution: 'zulu'
         cache: gradle
     - name: Install Dependecies
@@ -22,21 +22,14 @@ jobs:
     - name: Prepare Dobby Library
       run: |
         # Example of downloading Dobby (adjust URL and method as needed)
-        git clone https://github.com/jmpews/Dobby.git
+        git clone https://github.com/chiteroman/Dobby.git
         cd Dobby
-        mkdir build && cd build
-        cmake ..
-        make
-        sudo make install
-        # Set Dobby_DIR if needed
-        echo "Dobby_DIR=/usr/local/dobby" >> $GITHUB_ENV
+        mv Dobby app/src/main/jni
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
       run: |
-        ./gradlew installDist
-        prefab --output out/armeabi-v7a --build-system cmake --platform android --abi armeabi-v7a --os-version 21 --ndk-version 27 --stl c++_shared deps
         ./gradlew build -x lint
     - name: List Files & Folders
       run: tree
