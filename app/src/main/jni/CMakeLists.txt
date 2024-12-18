@@ -37,6 +37,9 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LINKER_FLAGS}")
 set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LINKER_FLAGS}")
 set(CMAKE_CXX_FLAGS "-Werror,-Wformat-security")
 
+add_subdirectory(Dobby)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE dobby_static)
+
 include_directories(include)
 include_directories(
         ImGui
@@ -56,7 +59,7 @@ include_directories(Stuffs)
 include_directories(Codes)
 
 find_package(Dobby REQUIRED CONFIG)
-include_directories(prefab/modules/dobby/include)
+include_directories(Dobby/include)
 
 add_library(eikarna SHARED
         Main.cpp
